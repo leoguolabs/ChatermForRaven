@@ -413,10 +413,11 @@ const watermarkContent = reactive({
 
 const leftPaneSize = ref(21.097)
 const agentsLeftPaneSize = ref(27)
-const mainTerminalSize = ref(100)
+// Open the AI conversation sidebar by default when entering Terminal.
+const mainTerminalSize = ref(65)
 const showWatermark = ref(true)
 const currentTheme = ref('dark')
-const aiSidebarSize = ref(0)
+const aiSidebarSize = ref(35)
 const aiMinSize = ref(0) // AI sidebar minimum size percentage
 const isDraggingSplitter = ref(false) // Whether the splitter is being dragged
 // Left sidebar state variables
@@ -435,7 +436,7 @@ interface SplitPaneItem {
 type KbRemovedEntry = { relPath: string; isDir: boolean }
 
 const splitPanes = ref<SplitPaneItem[]>([])
-const showAiSidebar = ref(false)
+const showAiSidebar = ref(true)
 const showSplitPane = ref(false)
 const verticalSplitPanes = ref<{ size: number; tabs: TabItem[]; activeTabId: string }[]>([])
 const mainVerticalSize = ref(100)
