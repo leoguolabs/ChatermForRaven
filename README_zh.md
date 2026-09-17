@@ -169,3 +169,7 @@ npm run build:linux
     <img src="https://contrib.rocks/image?repo=chaterm/Chaterm&refresh=true" />
   </a>
 </div>
+
+## Raven 终端设置
+
+Raven 终端设置保留通用、终端、扩展、模型、AI 偏好设置、工具与 MCP、Skills、规则和快捷键。计费概览、可信设备、隐私、关于及文档入口已移除，同时清理对应页面及专用的账号管理 API 封装。登录、同步、脱敏和更新等共享服务继续供其他模块使用。
