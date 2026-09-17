@@ -144,16 +144,7 @@
             ></LeftTab>
           </div>
           <div class="term_content">
-            <!-- Database workspace mode: replaces terminal dock + AI sidebar -->
-            <div
-              v-if="currentMenu === 'database'"
-              class="database-workspace-mode"
-            >
-              <Database />
-            </div>
-            <!-- Normal splitpanes layout for all other menus -->
             <splitpanes
-              v-else
               class="left-sidebar-container"
               @resize="(params: ResizeParams) => handleLeftPaneResize(params)"
             >
@@ -333,7 +324,6 @@ import Workspace from '@views/components/Workspace/index.vue'
 import Files from '@views/components/Files/tabIndex.vue'
 import Extensions from '@views/components/Extensions/index.vue'
 import Assets from '@views/components/Assets/index.vue'
-import Database from '@views/components/Database/index.vue'
 import Snippets from '@views/components/LeftTab/config/snippets.vue'
 import KnowledgeCenter from '@views/components/KnowledgeCenter/KnowledgeCenter.vue'
 import K8sTerminal from '@views/k8s/terminal/index.vue'
@@ -345,7 +335,6 @@ import { getMenuForDockBackedUserTab } from './terminalLayoutNavigation'
 import { v4 as uuidv4 } from 'uuid'
 import { userInfoStore } from '@/store'
 import { aliasConfigStore } from '@/store/aliasConfigStore'
-import { useDatabaseWorkspaceStore } from '@/store/databaseWorkspaceStore'
 import eventBus from '@/utils/eventBus'
 import { getActualTheme, initializeThemeFromDatabase } from '@/utils/themeUtils'
 import { componentInstances, inputManager, isGlobalInput, isShowCommandBar } from '@renderer/views/components/Ssh/utils/termInputManager'
@@ -385,7 +374,6 @@ const getLayoutStyle = (
   }
 }
 const aliasConfig = aliasConfigStore()
-const databaseWorkspaceStore = useDatabaseWorkspaceStore()
 const configStore = piniaUserConfigStore()
 const hideTabCloseButton = ref(false)
 const isTransparent = computed(() => !!configStore.getUserConfig.background.image)
@@ -1320,13 +1308,6 @@ const debouncedAiResizeCheck = () => {
 }
 
 const toggleSideBar = (value: string) => {
-  if (value === 'right' && currentMenu.value === 'database') {
-    const nextOpen = !databaseWorkspaceStore.dbAi.aiPaneOpen
-    databaseWorkspaceStore.setDbAiPaneOpen(nextOpen)
-    headerRef.value?.switchIcon('right', nextOpen)
-    return
-  }
-
   const container = (document.querySelector('.main-split-container') as HTMLElement) || (document.querySelector('.splitpanes') as HTMLElement)
   const containerWidth = container ? container.offsetWidth : 1000
 
@@ -1436,26 +1417,6 @@ const handleSearchHost = () => {
 
 const toggleMenu = function (params) {
   const type = params?.type
-  const isDatabaseWorkspace = currentMenu.value === 'database' || params?.beforeActive === 'database'
-
-  if (isDatabaseWorkspace && (params.menu === 'ai' || params.menu === 'openAiRight')) {
-    currentMenu.value = 'database'
-    const shouldOpen = params.menu === 'openAiRight' ? true : !databaseWorkspaceStore.dbAi.aiPaneOpen
-    databaseWorkspaceStore.setDbAiPaneOpen(shouldOpen)
-    headerRef.value?.switchIcon('right', shouldOpen)
-    return
-  }
-
-  if (params.menu === 'database') {
-    currentMenu.value = 'database'
-    if (type === 'same') {
-      databaseWorkspaceStore.toggleDatabaseSidebar()
-    } else {
-      databaseWorkspaceStore.setDatabaseSidebarOpen(true)
-    }
-    return
-  }
-
   const container = document.querySelector('.splitpanes') as HTMLElement
   const containerWidth = container.offsetWidth
   const expandFn = (dir) => {
@@ -3491,13 +3452,6 @@ defineExpose({
 .left-sidebar-container .splitpanes__pane {
   transition: none !important;
   animation: none !important;
-}
-
-// Database workspace mode fills the full term_content area
-.database-workspace-mode {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
 }
 
 .context-menu {

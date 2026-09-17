@@ -1104,42 +1104,22 @@ describe('TerminalLayout - AI Sidebar Sticky Logic (Core)', () => {
   })
 })
 
-describe('TerminalLayout - Database Workspace Mode', () => {
+describe('TerminalLayout - Terminal Workspace', () => {
   const sourcePath = join(process.cwd(), 'src/renderer/src/views/layouts/TerminalLayout.vue')
   const source = readFileSync(sourcePath, 'utf8')
 
-  it('imports the Database component', () => {
-    expect(source).toContain("import Database from '@views/components/Database/index.vue'")
-  })
-
-  it('branches the content area on currentMenu === "database"', () => {
-    expect(source).toContain("currentMenu === 'database'")
-    expect(source).toContain('database-workspace-mode')
-    expect(source).toMatch(/<Database\s*\/>/)
-  })
-
-  it('renders the normal splitpanes layout when menu is not database', () => {
-    expect(source).toMatch(/v-else[\s\S]{0,200}class="left-sidebar-container"/)
+  it('does not mount the removed database workspace', () => {
+    expect(source.includes('<Database')).toBe(false)
+    expect(source.includes('databaseWorkspaceStore')).toBe(false)
   })
 
   it('keeps the AI sidebar gated by the existing terminal-mode condition', () => {
     expect(source).toContain("props.currentMode === 'terminal' && showAiSidebar")
   })
 
-  it('defines scoped styles so database mode fills term_content', () => {
-    expect(source).toContain('.database-workspace-mode')
-    expect(source).toMatch(/\.database-workspace-mode\s*\{[\s\S]{0,200}height:\s*100%/)
-  })
-
-  it('switches back to a Dockview-backed menu before opening settings from database mode', () => {
+  it('switches legacy database menu state back to the workspace before opening settings', () => {
     expect(isDockBackedUserTab('userConfig')).toBe(true)
     expect(getMenuForDockBackedUserTab('database', 'userConfig')).toBe('workspace')
     expect(source).toContain('await ensureDockWorkspaceVisibleForUserTab(value)')
-  })
-
-  it('routes repeated database menu clicks to the database asset sidebar', () => {
-    expect(source).toContain("params.menu === 'database'")
-    expect(source).toContain('databaseWorkspaceStore.toggleDatabaseSidebar()')
-    expect(source).toContain('databaseWorkspaceStore.setDatabaseSidebarOpen(true)')
   })
 })

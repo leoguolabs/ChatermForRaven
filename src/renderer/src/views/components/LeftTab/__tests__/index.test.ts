@@ -84,8 +84,8 @@ describe('LeftTab', () => {
     window.localStorage.clear()
   })
 
-  it('includes database in menuTabsData', () => {
-    expect(menuTabsData.some((item) => item.key === 'database')).toBe(true)
+  it('excludes the database workspace from the menu', () => {
+    expect(menuTabsData.some((item) => item.key === 'database')).toBe(false)
   })
 
   it('hides the knowledge center menu when embedded in Raven', () => {
@@ -111,7 +111,7 @@ describe('LeftTab', () => {
     expect(renderedMainMenuIcons).not.toContain(knowledgeIcon)
   })
 
-  it('emits toggle-menu when database menu is clicked', async () => {
+  it('emits toggle-menu when assets menu is clicked', async () => {
     const wrapper = mount(LeftTab, {
       global: {
         stubs: {
@@ -125,16 +125,16 @@ describe('LeftTab', () => {
       }
     })
 
-    const databaseIndex = menuTabsData.findIndex((item) => item.key === 'database')
-    expect(databaseIndex).toBeGreaterThan(-1)
+    const assetsIndex = menuTabsData.findIndex((item) => item.key === 'assets')
+    expect(assetsIndex).toBeGreaterThan(-1)
 
     const menuItems = wrapper.findAll('.term_menu')
-    await menuItems[databaseIndex].trigger('click')
+    await menuItems[assetsIndex].trigger('click')
 
     const emitted = wrapper.emitted('toggle-menu')
     expect(emitted).toBeTruthy()
     expect(emitted?.[0]?.[0]).toMatchObject({
-      menu: 'database',
+      menu: 'assets',
       type: 'dif',
       isPlugin: false
     })
