@@ -1011,41 +1011,6 @@ ipcMain.handle('app:getHomePath', () => {
   return app.getPath('home')
 })
 
-ipcMain.handle('saveCustomBackground', async (_, sourcePath: string) => {
-  try {
-    const userDataPath = app.getPath('userData')
-    const targetDir = path.join(userDataPath, 'backgrounds')
-
-    // Ensure directory exists
-    await fs.mkdir(targetDir, { recursive: true })
-
-    const ext = path.extname(sourcePath)
-    const fileName = `custom_bg${ext}`
-    const targetPath = path.join(targetDir, fileName)
-
-    // Remove any existing custom_bg files to avoid conflicts (e.g. different extensions)
-    try {
-      const files = await fs.readdir(targetDir)
-      for (const file of files) {
-        if (file.startsWith('custom_bg')) {
-          await fs.unlink(path.join(targetDir, file))
-        }
-      }
-    } catch (e) {
-      // Ignore error if directory reading fails (though we just created it)
-    }
-
-    await fs.copyFile(sourcePath, targetPath)
-
-    const fileUrl = pathToFileURL(targetPath).toString()
-
-    return { success: true, path: targetPath, fileName, url: fileUrl }
-  } catch (error) {
-    logger.error('Failed to save custom background', { error: error })
-    return { success: false, error: error instanceof Error ? error.message : String(error) }
-  }
-})
-
 function createBrowserWindow(url: string): void {
   // If browser window already exists, focus it
   if (browserWindow && !browserWindow.isDestroyed()) {

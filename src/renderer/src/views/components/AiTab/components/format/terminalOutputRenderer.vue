@@ -822,7 +822,7 @@ const adjustTerminalHeight = () => {
 const getThemeColors = () => {
   const themeId = (configStore.getUserConfig?.theme ?? 'dark') as ThemeId
   // AI output renderer does not use custom background image.
-  return getResolvedTerminalTheme(themeId, { hasCustomBg: false })
+  return getResolvedTerminalTheme(themeId)
 }
 
 // Initialize terminal

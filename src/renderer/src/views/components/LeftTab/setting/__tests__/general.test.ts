@@ -3,7 +3,6 @@
  *
  * Tests for the General settings component including:
  * - Theme switching (dark/light/auto)
- * - Background settings (mode, image, opacity, brightness)
  * - Default layout switching
  * - Language switching
  * - Watermark settings
@@ -20,6 +19,9 @@ import { notification } from 'ant-design-vue'
 import eventBus from '@/utils/eventBus'
 import { userConfigStore } from '@/services/userConfigStoreService'
 import { userConfigStore as configStore } from '@/store/userConfigStore'
+
+// Isolate component tests from application bootstrap.
+vi.mock('@/main', async () => ({ pinia: (await import('pinia')).createPinia() }))
 
 // Mock ant-design-vue components
 vi.mock('ant-design-vue', () => ({
@@ -54,11 +56,6 @@ const mockTranslations: Record<string, string> = {
   'user.themeCatppuccinLatte': 'Cream Latte',
   'user.themeGruvboxDark': 'Grove Moss',
   'user.themeNordFrost': 'Fjord Ice',
-  'user.background': 'Background',
-  'user.backgroundDefault': 'Default',
-  'user.backgroundCustomUpload': 'Custom Upload (JPG, PNG, WebP, GIF)',
-  'user.backgroundOpacity': 'Opacity',
-  'user.backgroundBrightness': 'Brightness',
   'user.defaultLayout': 'Default Layout',
   'user.defaultLayoutTerminal': 'Terminal',
   'user.defaultLayoutAgents': 'Agents',
@@ -71,8 +68,7 @@ const mockTranslations: Record<string, string> = {
   'user.error': 'Error',
   'user.saveConfigFailedDescription': 'Failed to save configuration',
   'user.themeSwitchFailed': 'Theme switch failed',
-  'user.themeSwitchFailedDescription': 'Failed to switch theme',
-  'user.saveBackgroundFailed': 'Failed to save background'
+  'user.themeSwitchFailedDescription': 'Failed to switch theme'
 }
 
 const mockT = (key: string) => {
@@ -103,11 +99,6 @@ const { mockTFn } = vi.hoisted(() => {
     'user.themeCatppuccinLatte': 'Cream Latte',
     'user.themeGruvboxDark': 'Grove Moss',
     'user.themeNordFrost': 'Fjord Ice',
-    'user.background': 'Background',
-    'user.backgroundDefault': 'Default',
-    'user.backgroundCustomUpload': 'Custom Upload (JPG, PNG, WebP, GIF)',
-    'user.backgroundOpacity': 'Opacity',
-    'user.backgroundBrightness': 'Brightness',
     'user.defaultLayout': 'Default Layout',
     'user.defaultLayoutTerminal': 'Terminal',
     'user.defaultLayoutAgents': 'Agents',
@@ -120,8 +111,7 @@ const { mockTFn } = vi.hoisted(() => {
     'user.error': 'Error',
     'user.saveConfigFailedDescription': 'Failed to save configuration',
     'user.themeSwitchFailed': 'Theme switch failed',
-    'user.themeSwitchFailedDescription': 'Failed to switch theme',
-    'user.saveBackgroundFailed': 'Failed to save background'
+    'user.themeSwitchFailedDescription': 'Failed to switch theme'
   }
   return {
     mockTFn: (key: string) => translations[key] || key
@@ -197,9 +187,6 @@ vi.mock('@/utils/themeUtils', () => ({
 // Mock window.api
 const mockWindowApi = {
   updateTheme: vi.fn(),
-  showOpenDialog: vi.fn(),
-  saveCustomBackground: vi.fn(),
-  getCustomBackground: vi.fn(),
   onSystemThemeChanged: vi.fn()
 }
 
@@ -284,20 +271,10 @@ describe('General Component', () => {
       language: 'zh-CN',
       watermark: 'open',
       theme: 'dark',
-      defaultLayout: 'terminal',
-      lastCustomImage: '',
-      background: {
-        image: '',
-        opacity: 0.15,
-        brightness: 0.45,
-        mode: 'none'
-      }
+      defaultLayout: 'terminal'
     })
     ;(userConfigStore.saveConfig as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
     mockWindowApi.updateTheme.mockResolvedValue(undefined)
-    mockWindowApi.showOpenDialog.mockResolvedValue({ canceled: true, filePaths: [] })
-    mockWindowApi.saveCustomBackground.mockResolvedValue({ success: true, url: 'file:///test.jpg' })
-    mockWindowApi.getCustomBackground.mockResolvedValue({ exists: false })
     mockWindowApi.onSystemThemeChanged.mockImplementation(() => () => {})
 
     // Clear console output for cleaner test results
@@ -471,223 +448,19 @@ describe('General Component', () => {
     })
   })
 
-  describe('Background Settings', () => {
-    beforeEach(async () => {
-      wrapper = createWrapper()
-      await nextTick()
-      await nextTick()
-    })
+  it('keeps theme selection without wallpaper controls', async () => {
+    wrapper = createWrapper()
+    await nextTick()
+    await nextTick()
 
-    it('should render background mode radio group', () => {
-      const radioGroup = wrapper.findAll('.a-radio-group')
-      expect(radioGroup.length).toBeGreaterThan(0)
-    })
-
-    it('should show background grid always (no mode toggle)', async () => {
-      const vm = wrapper.vm as any
-      vm.userConfig.background.mode = 'none'
-      await nextTick()
-
-      // Grid should always be visible since we removed the mode toggle
-      expect(wrapper.find('.unified-bg-grid').exists()).toBe(true)
-    })
-
-    it('should hide background grid when mode is none - grid is always visible', async () => {
-      const vm = wrapper.vm as any
-      vm.userConfig.background.mode = 'none'
-      await nextTick()
-
-      // Grid is always visible now
-      expect(vm.userConfig.background.mode).toBe('none')
-    })
-
-    it('should select default background (no background)', async () => {
-      const vm = wrapper.vm as any
-      const store = configStore()
-      const updateBackgroundModeSpy = vi.spyOn(store, 'updateBackgroundMode')
-      const updateBackgroundImageSpy = vi.spyOn(store, 'updateBackgroundImage')
-
-      vm.userConfig.background.mode = 'image'
-      vm.userConfig.background.image = 'test.jpg'
-      await nextTick()
-
-      await vm.selectDefaultBackground()
-
-      expect(vm.userConfig.background.mode).toBe('none')
-      expect(vm.userConfig.background.image).toBe('')
-      expect(updateBackgroundModeSpy).toHaveBeenCalledWith('none')
-      expect(updateBackgroundImageSpy).toHaveBeenCalledWith('')
-    })
-
-    it('should clear background image when selecting default background', async () => {
-      const vm = wrapper.vm as any
-      const store = configStore()
-      const updateBackgroundImageSpy = vi.spyOn(store, 'updateBackgroundImage')
-
-      vm.userConfig.background.mode = 'image'
-      vm.userConfig.background.image = 'test.jpg'
-      await nextTick()
-
-      await vm.selectDefaultBackground()
-
-      expect(vm.userConfig.background.image).toBe('')
-      expect(updateBackgroundImageSpy).toHaveBeenCalledWith('')
-    })
-
-    it('should select system background and set mode to image', async () => {
-      const vm = wrapper.vm as any
-      const store = configStore()
-      const updateBackgroundImageSpy = vi.spyOn(store, 'updateBackgroundImage')
-      const updateBackgroundModeSpy = vi.spyOn(store, 'updateBackgroundMode')
-
-      vm.userConfig.background.mode = 'none'
-      await nextTick()
-
-      await vm.selectSystemBackground(1)
-
-      expect(vm.userConfig.background.mode).toBe('image')
-      expect(vm.userConfig.background.image).toContain('wall-1.jpg')
-      expect(updateBackgroundModeSpy).toHaveBeenCalledWith('image')
-      expect(updateBackgroundImageSpy).toHaveBeenCalled()
-    })
-
-    it('should show sliders when background mode is image and image is set', async () => {
-      const vm = wrapper.vm as any
-      vm.userConfig.background.mode = 'image'
-      vm.userConfig.background.image = 'test.jpg'
-      await nextTick()
-
-      expect(wrapper.find('.bg-sliders-section').exists()).toBe(true)
-    })
-
-    it('should change background opacity', async () => {
-      const vm = wrapper.vm as any
-      const store = configStore()
-      const updateBackgroundOpacitySpy = vi.spyOn(store, 'updateBackgroundOpacity')
-
-      vm.userConfig.background.opacity = 0.5
-      await nextTick()
-
-      await vm.changeBackgroundOpacity()
-
-      expect(updateBackgroundOpacitySpy).toHaveBeenCalledWith(0.5)
-    })
-
-    it('should change background brightness', async () => {
-      const vm = wrapper.vm as any
-      const store = configStore()
-      const updateBackgroundBrightnessSpy = vi.spyOn(store, 'updateBackgroundBrightness')
-
-      vm.userConfig.background.brightness = 0.7
-      await nextTick()
-
-      await vm.changeBackgroundBrightness()
-
-      expect(updateBackgroundBrightnessSpy).toHaveBeenCalledWith(0.7)
-    })
-
-    it('should open file dialog when upload item is clicked', async () => {
-      const vm = wrapper.vm as any
-      vm.customBackgroundImage = ''
-      await nextTick()
-
-      await vm.selectBackgroundImage()
-
-      expect(mockWindowApi.showOpenDialog).toHaveBeenCalledWith({
-        properties: ['openFile'],
-        filters: [{ name: 'Images', extensions: ['jpg', 'png', 'gif', 'jpeg', 'webp'] }]
-      })
-    })
-
-    it('should select custom background when custom item is clicked with image', async () => {
-      const vm = wrapper.vm as any
-      const store = configStore()
-      const updateBackgroundImageSpy = vi.spyOn(store, 'updateBackgroundImage')
-      const updateBackgroundModeSpy = vi.spyOn(store, 'updateBackgroundMode')
-
-      vm.customBackgroundImage = 'file:///custom.jpg'
-      await nextTick()
-
-      await vm.selectCustomBackground()
-
-      expect(vm.userConfig.background.mode).toBe('image')
-      expect(vm.userConfig.background.image).toBe('file:///custom.jpg')
-      expect(updateBackgroundModeSpy).toHaveBeenCalledWith('image')
-      expect(updateBackgroundImageSpy).toHaveBeenCalledWith('file:///custom.jpg')
-    })
-
-    it('should save custom background when file is selected', async () => {
-      const vm = wrapper.vm as any
-      vm.userConfig.background.mode = 'image'
-      await nextTick()
-
-      mockWindowApi.showOpenDialog.mockResolvedValue({
-        canceled: false,
-        filePaths: ['/path/to/image.jpg']
-      })
-      mockWindowApi.saveCustomBackground.mockResolvedValue({
-        success: true,
-        url: 'file:///saved/image.jpg'
-      })
-
-      await vm.selectBackgroundImage()
-
-      expect(mockWindowApi.saveCustomBackground).toHaveBeenCalledWith('/path/to/image.jpg')
-      expect(vm.customBackgroundImage).toContain('file:///saved/image.jpg')
-      expect(vm.userConfig.background.image).toContain('file:///saved/image.jpg')
-    })
-
-    it('should handle background save errors', async () => {
-      const vm = wrapper.vm as any
-      vm.userConfig.background.mode = 'image'
-      await nextTick()
-
-      mockWindowApi.showOpenDialog.mockResolvedValue({
-        canceled: false,
-        filePaths: ['/path/to/image.jpg']
-      })
-      mockWindowApi.saveCustomBackground.mockResolvedValue({
-        success: false,
-        error: 'Save failed'
-      })
-
-      await vm.selectBackgroundImage()
-
-      expect(notification.error).toHaveBeenCalledWith({
-        message: 'Failed to save background',
-        description: 'Save failed'
-      })
-    })
-
-    it('should clear custom background', async () => {
-      const vm = wrapper.vm as any
-      const store = configStore()
-      const updateBackgroundImageSpy = vi.spyOn(store, 'updateBackgroundImage')
-
-      vm.userConfig.background.mode = 'image'
-      vm.customBackgroundImage = 'file:///custom.jpg'
-      vm.userConfig.background.image = 'file:///custom.jpg'
-      await nextTick()
-
-      await vm.clearCustomBackground()
-
-      expect(vm.customBackgroundImage).toBe('')
-      expect(vm.userConfig.background.image).toBe('')
-      expect(updateBackgroundImageSpy).toHaveBeenCalledWith('')
-    })
-
-    it('should not clear background image if different from custom', async () => {
-      const vm = wrapper.vm as any
-      vm.userConfig.background.mode = 'image'
-      vm.customBackgroundImage = 'file:///custom.jpg'
-      vm.userConfig.background.image = 'file:///system.jpg'
-      await nextTick()
-
-      await vm.clearCustomBackground()
-
-      expect(vm.customBackgroundImage).toBe('')
-      expect(vm.userConfig.background.image).toBe('file:///system.jpg')
-    })
+    expect(wrapper.find('.theme-select').exists()).toBe(true)
+    expect(wrapper.find('.unified-bg-grid').exists()).toBe(false)
+    expect(wrapper.find('.custom-upload-section').exists()).toBe(false)
+    expect(wrapper.find('.bg-sliders-section').exists()).toBe(false)
+    await (wrapper.vm as any).saveConfig()
+    const saved = vi.mocked(userConfigStore.saveConfig).mock.calls.at(-1)?.[0]
+    expect(saved).not.toHaveProperty('background')
+    expect(saved).not.toHaveProperty('lastCustomImage')
   })
 
   describe('Default Layout Switching', () => {
@@ -912,85 +685,6 @@ describe('General Component', () => {
     })
   })
 
-  describe('Initialization with Custom Background', () => {
-    it('should initialize custom background image from saved config', async () => {
-      ;(userConfigStore.getConfig as ReturnType<typeof vi.fn>).mockResolvedValue({
-        language: 'zh-CN',
-        watermark: 'open',
-        theme: 'auto',
-        defaultLayout: 'terminal',
-        lastCustomImage: '',
-        background: {
-          image: 'file:///custom-background.jpg',
-          opacity: 0.15,
-          brightness: 0.45,
-          mode: 'image'
-        }
-      })
-
-      wrapper = createWrapper()
-      await nextTick()
-      await nextTick()
-
-      const vm = wrapper.vm as any
-      expect(vm.customBackgroundImage).toBe('file:///custom-background.jpg')
-    })
-
-    it('should not set custom background for system backgrounds', async () => {
-      ;(userConfigStore.getConfig as ReturnType<typeof vi.fn>).mockResolvedValue({
-        language: 'zh-CN',
-        watermark: 'open',
-        theme: 'auto',
-        defaultLayout: 'terminal',
-        lastCustomImage: '',
-        background: {
-          image: 'assets/backgroup/wall-1.jpg',
-          opacity: 0.15,
-          brightness: 0.45,
-          mode: 'image'
-        }
-      })
-
-      wrapper = createWrapper()
-      await nextTick()
-      await nextTick()
-
-      const vm = wrapper.vm as any
-      expect(vm.customBackgroundImage).toBe('')
-    })
-
-    it('should initialize custom background image from lastCustomImage when current background is system', async () => {
-      ;(userConfigStore.getConfig as ReturnType<typeof vi.fn>).mockResolvedValue({
-        language: 'zh-CN',
-        watermark: 'open',
-        theme: 'auto',
-        defaultLayout: 'terminal',
-        lastCustomImage: 'file:///saved-custom-background.jpg',
-        background: {
-          image: 'assets/backgroup/wall-1.jpg',
-          opacity: 0.15,
-          brightness: 0.45,
-          mode: 'image'
-        }
-      })
-
-      wrapper = createWrapper()
-      await nextTick()
-      await nextTick()
-
-      const vm = wrapper.vm as any
-      expect(vm.customBackgroundImage).toBe('file:///saved-custom-background.jpg')
-    })
-
-    it('should not call getCustomBackground IPC when loading settings', async () => {
-      wrapper = createWrapper()
-      await nextTick()
-      await nextTick()
-
-      expect(mockWindowApi.getCustomBackground).not.toHaveBeenCalled()
-    })
-  })
-
   describe('Additional Language Options', () => {
     beforeEach(async () => {
       wrapper = createWrapper()
@@ -1041,32 +735,6 @@ describe('General Component', () => {
       expect(localStorage.getItem('lang')).toBe('ar-AR')
       expect(updateLanguageSpy).toHaveBeenCalledWith('ar-AR')
       expect(eventBus.emit).toHaveBeenCalledWith('languageChanged', 'ar-AR')
-    })
-  })
-
-  describe('System Background URL Generation', () => {
-    beforeEach(async () => {
-      wrapper = createWrapper()
-      await nextTick()
-      await nextTick()
-    })
-
-    it('should generate correct system background URL', async () => {
-      const vm = wrapper.vm as any
-      const url = vm.getSystemBgUrl(1)
-
-      expect(url).toContain('wall-1.jpg')
-      expect(typeof url).toBe('string')
-    })
-
-    it('should generate different URLs for different indices', async () => {
-      const vm = wrapper.vm as any
-      const url1 = vm.getSystemBgUrl(1)
-      const url2 = vm.getSystemBgUrl(2)
-
-      expect(url1).not.toBe(url2)
-      expect(url1).toContain('wall-1.jpg')
-      expect(url2).toContain('wall-2.jpg')
     })
   })
 
@@ -1167,70 +835,6 @@ describe('General Component', () => {
         expect(updateThemeCalls.length).toBe(0)
         expect(document.documentElement.className).toBe('theme-light')
       }
-    })
-  })
-
-  describe('Background Image Selection Edge Cases', () => {
-    beforeEach(async () => {
-      wrapper = createWrapper()
-      await nextTick()
-      await nextTick()
-    })
-
-    it('should handle background image selection with existing query parameters', async () => {
-      const vm = wrapper.vm as any
-      vm.userConfig.background.mode = 'image'
-      await nextTick()
-
-      mockWindowApi.showOpenDialog.mockResolvedValue({
-        canceled: false,
-        filePaths: ['/path/to/image.jpg']
-      })
-      mockWindowApi.saveCustomBackground.mockResolvedValue({
-        success: true,
-        url: 'file:///saved/image.jpg?existing=param'
-      })
-
-      await vm.selectBackgroundImage()
-
-      expect(vm.customBackgroundImage).toContain('file:///saved/image.jpg')
-      expect(vm.customBackgroundImage).toContain('&t=')
-    })
-
-    it('should handle background image selection when saveResult has no url', async () => {
-      const vm = wrapper.vm as any
-      vm.userConfig.background.mode = 'image'
-      await nextTick()
-
-      mockWindowApi.showOpenDialog.mockResolvedValue({
-        canceled: false,
-        filePaths: ['/path/to/image.jpg']
-      })
-      mockWindowApi.saveCustomBackground.mockResolvedValue({
-        success: true,
-        url: ''
-      })
-
-      await vm.selectBackgroundImage()
-
-      // Should not update image if url is empty
-      expect(vm.customBackgroundImage).toBe('')
-    })
-
-    it('should handle errors in selectBackgroundImage', async () => {
-      const vm = wrapper.vm as any
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      vm.userConfig.background.mode = 'image'
-      await nextTick()
-
-      mockWindowApi.showOpenDialog.mockRejectedValue(new Error('Dialog failed'))
-
-      await vm.selectBackgroundImage()
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith('[settings.general] Failed to select background image', {
-        error: expect.any(Error)
-      })
-      consoleErrorSpy.mockRestore()
     })
   })
 

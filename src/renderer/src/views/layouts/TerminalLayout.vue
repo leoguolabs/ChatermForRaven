@@ -82,7 +82,7 @@
     </div>
     <div
       class="terminal-layout"
-      :class="{ 'transparent-bg': isTransparent, 'agents-mode': props.currentMode === 'agents' }"
+      :class="{ 'agents-mode': props.currentMode === 'agents' }"
     >
       <div class="term_header">
         <Header
@@ -374,9 +374,7 @@ const getLayoutStyle = (
   }
 }
 const aliasConfig = aliasConfigStore()
-const configStore = piniaUserConfigStore()
 const hideTabCloseButton = ref(false)
-const isTransparent = computed(() => !!configStore.getUserConfig.background.image)
 const headerRef = ref<InstanceType<typeof Header> | null>(null)
 const allTabs = ref<InstanceType<typeof TabsPanel> | null>(null)
 const assetsRef = ref<InstanceType<typeof Assets> | null>(null)
@@ -3132,21 +3130,6 @@ defineExpose({
           background: var(--bg-color);
         }
       }
-    }
-  }
-
-  &.transparent-bg {
-    background: transparent !important;
-
-    .dockview-theme-dark,
-    .dockview-theme-light {
-      --dv-group-view-background-color: transparent !important;
-      --dv-tabs-and-actions-container-background-color: transparent !important;
-      --dv-activegroup-visiblepanel-tab-background-color: rgba(60, 60, 60, 0.3) !important;
-      --dv-activegroup-hiddenpanel-tab-background-color: transparent !important;
-      --dv-inactivegroup-visiblepanel-tab-background-color: transparent !important;
-      --dv-inactivegroup-hiddenpanel-tab-background-color: transparent !important;
-      --dv-paneview-header-border-color: rgba(255, 255, 255, 0.1) !important;
     }
   }
 

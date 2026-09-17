@@ -19,13 +19,7 @@ export const userConfigStore = defineStore('userConfig', {
         dataSync: 'disabled',
         feature: 0.0,
         terminalType: 'xterm',
-        theme: 'dark',
-        background: {
-          image: '',
-          opacity: 0.15,
-          brightness: 0.45,
-          mode: 'none'
-        }
+        theme: 'dark'
       }
     }
   },
@@ -49,12 +43,6 @@ export const userConfigStore = defineStore('userConfig', {
       feature: number
       terminalType: string
       theme: string
-      background: {
-        image: string
-        opacity: number
-        brightness: number
-        mode: string
-      }
     } => {
       return (
         state?.userConfig || {
@@ -73,13 +61,7 @@ export const userConfigStore = defineStore('userConfig', {
           dataSync: 'disabled',
           feature: 0.0,
           terminalType: 'xterm',
-          theme: 'dark',
-          background: {
-            image: '',
-            opacity: 0.15,
-            brightness: 0.45,
-            mode: 'none'
-          }
+          theme: 'dark'
         }
       )
     }
@@ -96,18 +78,6 @@ export const userConfigStore = defineStore('userConfig', {
     },
     updateDataSync(dataSync: string) {
       this.userConfig.dataSync = dataSync
-    },
-    updateBackgroundImage(path: string) {
-      this.userConfig.background.image = path
-    },
-    updateBackgroundOpacity(opacity: number) {
-      this.userConfig.background.opacity = opacity
-    },
-    updateBackgroundBrightness(brightness: number) {
-      this.userConfig.background.brightness = brightness
-    },
-    updateBackgroundMode(mode: string) {
-      this.userConfig.background.mode = mode
     },
     updateTheme(theme: string) {
       this.userConfig.theme = theme

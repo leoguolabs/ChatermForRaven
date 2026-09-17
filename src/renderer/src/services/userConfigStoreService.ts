@@ -13,10 +13,6 @@ import { isChatermEmbedded, stripRavenOwnedUserConfigFields } from '@/utils/embe
 
 const logger = createRendererLogger('service.userConfig')
 
-function isSystemBackgroundImage(image: string): boolean {
-  return /(?:^|\/)wall-\d+\.jpg(?:\?.*)?$/i.test(image) || image.includes('assets/backgroup/wall-')
-}
-
 export interface ShortcutConfig {
   [key: string]: string
 }
@@ -25,13 +21,6 @@ export type PlatformKey = 'mac' | 'windows' | 'linux'
 export type PlatformShortcuts = Partial<Record<PlatformKey, ShortcutConfig>>
 
 const PLATFORM_KEYS: PlatformKey[] = ['mac', 'windows', 'linux']
-
-export interface BackgroundConfig {
-  mode: 'none' | 'image'
-  image: string
-  opacity: number
-  brightness: number
-}
 
 export const SUPPORTED_LANGUAGE_VALUES = ['zh-CN', 'zh-TW', 'en-US', 'de-DE', 'fr-FR', 'it-IT', 'pt-PT', 'ru-RU', 'ja-JP', 'ko-KR', 'ar-AR'] as const
 
@@ -88,8 +77,23 @@ export interface UserConfig {
       description?: string
     }>
   >
-  lastCustomImage?: string
-  background: BackgroundConfig
+}
+
+// Ignore retired wallpaper settings from older installations and imported configs.
+function stripRemovedBackgroundFields<T extends object>(config: T): T {
+  const cleaned = { ...config }
+  for (const key of [
+    'background',
+    'lastCustomImage',
+    'backgroundConfig',
+    'backgroundImage',
+    'backgroundMode',
+    'backgroundOpacity',
+    'backgroundBrightness'
+  ]) {
+    delete (cleaned as Record<string, unknown>)[key]
+  }
+  return cleaned
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -166,14 +170,7 @@ export function buildDefaultUserConfig(now: number = Date.now()): UserConfig {
     sshAgentsMap: '[]',
     sshProxyConfigs: [],
     workspaceExpandedKeys: [],
-    workspaceTunnelConfigs: {},
-    lastCustomImage: '',
-    background: {
-      mode: 'none',
-      image: '',
-      opacity: 0.15,
-      brightness: 0.45
-    }
+    workspaceTunnelConfigs: {}
   }
 }
 
@@ -219,59 +216,10 @@ export class UserConfigStoreService {
 
       const defaultConfig = this.getDefaultConfig()
 
-      // Migration: If background object is missing but old fields exist, migrate them
-      if (!savedConfig.background) {
-        savedConfig.background = { ...defaultConfig.background }
-
-        if (savedConfig.backgroundImage !== undefined) {
-          savedConfig.background.image = savedConfig.backgroundImage
-        }
-        if (savedConfig.backgroundOpacity !== undefined) {
-          savedConfig.background.opacity = savedConfig.backgroundOpacity
-        }
-        if (savedConfig.backgroundBrightness !== undefined) {
-          savedConfig.background.brightness = savedConfig.backgroundBrightness
-        }
-        if (savedConfig.backgroundMode !== undefined) {
-          savedConfig.background.mode = savedConfig.backgroundMode
-        }
-      }
-
-      // Migration: Handle legacy backgroundConfig object format
-      if (savedConfig.backgroundConfig) {
-        if (!savedConfig.background.image && savedConfig.backgroundConfig.imagePath) {
-          savedConfig.background.image = savedConfig.backgroundConfig.imagePath
-        }
-        if (savedConfig.backgroundConfig.enabled !== undefined) {
-          savedConfig.background.mode = savedConfig.backgroundConfig.enabled ? 'image' : 'none'
-        }
-        delete savedConfig.backgroundConfig
-      }
-
-      // Discard base64 image data from legacy versions - only file paths are valid
-      if (savedConfig.background.image && savedConfig.background.image.startsWith('data:')) {
-        savedConfig.background.image = ''
-        savedConfig.background.mode = 'none'
-      }
-
-      // Migration: Preserve last custom background path explicitly for UI restore
-      if (
-        !savedConfig.lastCustomImage &&
-        savedConfig.background.image &&
-        !savedConfig.background.image.startsWith('data:') &&
-        !isSystemBackgroundImage(savedConfig.background.image)
-      ) {
-        savedConfig.lastCustomImage = savedConfig.background.image
-      }
-
       // Merge with default config to ensure all fields exist
       return {
         ...defaultConfig,
-        ...savedConfig,
-        background: {
-          ...defaultConfig.background,
-          ...(savedConfig.background || {})
-        }
+        ...stripRemovedBackgroundFields(savedConfig)
       }
     } catch (error) {
       logger.error('Error getting config from SQLite', { error: error })
@@ -282,7 +230,7 @@ export class UserConfigStoreService {
   async saveConfig(config: Partial<UserConfig>): Promise<void> {
     try {
       const defaultConfig = await this.getConfig()
-      const persistableConfig = stripRavenOwnedUserConfigFields(config) as Partial<UserConfig>
+      const persistableConfig = stripRemovedBackgroundFields(stripRavenOwnedUserConfigFields(config))
 
       const sanitizedConfig: UserConfig = {
         ...defaultConfig,

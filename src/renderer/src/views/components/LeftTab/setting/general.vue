@@ -54,104 +54,6 @@
         </a-form-item>
 
         <a-form-item
-          :label="$t('user.background')"
-          class="user_my-ant-form-item"
-        >
-          <div class="bg-content">
-            <!-- Background Grid -->
-            <div class="unified-bg-grid">
-              <!-- Slot 1: Default Background (no background) -->
-              <div
-                class="bg-grid-item default-bg-item"
-                :class="{ active: userConfig.background.mode === 'none' }"
-                @click="selectDefaultBackground"
-              >
-                <div class="default-bg-placeholder">
-                  <desktop-outlined style="font-size: 20px; margin-bottom: 4px" />
-                  <span style="font-size: 10px">{{ $t('user.backgroundDefault') }}</span>
-                </div>
-              </div>
-
-              <!-- Slots 2-6: System Backgrounds -->
-              <div
-                v-for="i in 5"
-                :key="i"
-                class="bg-grid-item system-item"
-                :class="{ active: userConfig.background.mode === 'image' && userConfig.background.image.includes(`wall-${i}.jpg`) }"
-                @click="selectSystemBackground(i)"
-              >
-                <img
-                  :src="getSystemBgUrl(i)"
-                  loading="lazy"
-                />
-              </div>
-            </div>
-
-            <!-- Custom Upload Section -->
-            <div class="custom-upload-section">
-              <span class="custom-upload-label">{{ $t('user.backgroundCustomUpload') }}</span>
-              <div class="custom-upload-grid">
-                <!-- Custom uploaded background (if exists) -->
-                <div
-                  v-if="customBackgroundImage"
-                  class="bg-grid-item custom-item"
-                  :class="{ active: userConfig.background.mode === 'image' && userConfig.background.image === customBackgroundImage }"
-                  @click="selectCustomBackground"
-                >
-                  <img
-                    :src="convertFileLocalResourceSrc(customBackgroundImage)"
-                    alt="Custom Background"
-                  />
-                  <div
-                    class="delete-btn"
-                    @click.stop="clearCustomBackground"
-                  >
-                    <delete-outlined />
-                  </div>
-                </div>
-
-                <!-- Upload button -->
-                <div
-                  class="bg-grid-item upload-item"
-                  @click="selectBackgroundImage"
-                >
-                  <div class="upload-placeholder">
-                    <upload-outlined style="font-size: 20px" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Sliders (Global for any selected background) -->
-            <div
-              v-if="userConfig.background.mode === 'image' && userConfig.background.image"
-              class="bg-sliders-section mt-2"
-            >
-              <div class="slider-item">
-                <span class="slider-label">{{ $t('user.backgroundOpacity') }}</span>
-                <a-slider
-                  v-model:value="userConfig.background.opacity"
-                  :min="0"
-                  :max="1"
-                  :step="0.05"
-                  @change="changeBackgroundOpacity"
-                />
-              </div>
-              <div class="slider-item">
-                <span class="slider-label">{{ $t('user.backgroundBrightness') }}</span>
-                <a-slider
-                  v-model:value="userConfig.background.brightness"
-                  :min="0"
-                  :max="1"
-                  :step="0.05"
-                  @change="changeBackgroundBrightness"
-                />
-              </div>
-            </div>
-          </div>
-        </a-form-item>
-
-        <a-form-item
           :label="$t('user.defaultLayout')"
           class="user_my-ant-form-item"
         >
@@ -316,7 +218,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, onBeforeUnmount, computed } from 'vue'
 import { notification } from 'ant-design-vue'
-import { DeleteOutlined, UploadOutlined, DesktopOutlined } from '@ant-design/icons-vue'
 import { userConfigStore, remoteApplyGuard } from '@/services/userConfigStoreService'
 import { userConfigStore as configStore } from '@/store/userConfigStore'
 import { useEditorConfigStore, type EditorConfig, FONT_FAMILY_OPTIONS } from '@/store/editorConfig'
@@ -327,7 +228,6 @@ import { THEME_PRESETS } from '../../../../../../shared/themes/presets'
 import { applyThemeToDocument } from '@/themes/applyTheme'
 import type { ThemeId } from '../../../../../../shared/themes/types'
 import { useI18n } from 'vue-i18n'
-import { convertFileLocalResourceSrc } from '@/utils/convertFileLocalResourceSrc'
 
 const logger = createRendererLogger('settings.general')
 const api = window.api
@@ -338,18 +238,8 @@ const userConfig = ref({
   language: 'zh-CN',
   watermark: 'open',
   theme: 'dark',
-  defaultLayout: 'terminal',
-  lastCustomImage: '',
-  background: {
-    image: '',
-    opacity: 0.05,
-    brightness: 0.9,
-    mode: 'none'
-  }
+  defaultLayout: 'terminal'
 })
-
-const customBackgroundImage = ref('')
-const SYSTEM_BG_KEY_PREFIX = 'system-bg:'
 
 interface ThemeOptionPreview {
   value: ThemeId
@@ -464,28 +354,9 @@ const loadSavedConfig = async () => {
         ...userConfig.value,
         ...savedConfig,
         defaultLayout: savedConfig.defaultLayout || 'terminal',
-        lastCustomImage: savedConfig.lastCustomImage || '',
-        background: savedConfig.background || {
-          image: '',
-          opacity: 0.8,
-          brightness: 1.0,
-          mode: 'none'
-        },
         watermark: (savedConfig.watermark || 'open') as 'open' | 'close'
       } as any
 
-      const normalizedSystemBg = normalizeSystemBackgroundImage(userConfig.value.background.image)
-      if (normalizedSystemBg !== userConfig.value.background.image) {
-        userConfig.value.background.image = normalizedSystemBg
-      }
-
-      // Initialize custom background image if current bg is not a system one
-      if (userConfig.value.background.image && !isSystemBackgroundImage(userConfig.value.background.image)) {
-        customBackgroundImage.value = userConfig.value.background.image
-        userConfig.value.lastCustomImage = userConfig.value.background.image
-      } else if (userConfig.value.lastCustomImage) {
-        customBackgroundImage.value = userConfig.value.lastCustomImage
-      }
       const preset = resolveThemePreset(userConfig.value.theme as ThemeId, getSystemTheme() as 'dark' | 'light')
       applyThemeToDocument(preset)
       eventBus.emit('updateTheme', {
@@ -517,9 +388,7 @@ const saveConfig = async () => {
       language: userConfig.value.language,
       watermark: (userConfig.value.watermark || 'open') as 'open' | 'close',
       theme: userConfig.value.theme,
-      defaultLayout: userConfig.value.defaultLayout,
-      lastCustomImage: userConfig.value.lastCustomImage,
-      background: userConfig.value.background
+      defaultLayout: userConfig.value.defaultLayout
     }
     await userConfigStore.saveConfig(configToStore as any)
     eventBus.emit('updateWatermark', configToStore.watermark)
@@ -671,133 +540,6 @@ const changeDefaultLayout = async () => {
   // Switch to the selected layout immediately
   eventBus.emit('switch-mode', userConfig.value.defaultLayout)
   eventBus.emit('switch-mode', userConfig.value.defaultLayout)
-  await saveConfig()
-}
-
-const selectDefaultBackground = async () => {
-  userConfig.value.background.mode = 'none'
-  userConfig.value.background.image = ''
-  configStore().updateBackgroundMode('none')
-  configStore().updateBackgroundImage('')
-  await saveConfig()
-}
-
-// Helper to get system background URL
-// Using a relative path that works in development and production (if assets are handled correctly)
-// In Electron renderer, we can often use relative paths or require/import
-const getSystemBgStorageKey = (index: number): string => `${SYSTEM_BG_KEY_PREFIX}${index}`
-
-const getSystemBgIndex = (imagePath: string): number | null => {
-  if (!imagePath) {
-    return null
-  }
-
-  if (imagePath.startsWith(SYSTEM_BG_KEY_PREFIX)) {
-    const index = Number(imagePath.slice(SYSTEM_BG_KEY_PREFIX.length))
-    return Number.isNaN(index) ? null : index
-  }
-
-  const match = imagePath.match(/wall-(\d+)\.jpg/)
-  if (!match) {
-    return null
-  }
-
-  const index = Number(match[1])
-  return Number.isNaN(index) ? null : index
-}
-
-const normalizeSystemBackgroundImage = (imagePath: string): string => {
-  const index = getSystemBgIndex(imagePath)
-  if (index === null) {
-    return imagePath
-  }
-  return getSystemBgStorageKey(index)
-}
-
-const isSystemBackgroundImage = (imagePath: string): boolean => getSystemBgIndex(imagePath) !== null
-
-const getSystemBgUrl = (index: number): string => {
-  return new URL(`../../../../assets/backgroup/wall-${index}.jpg`, import.meta.url).href
-}
-
-const selectSystemBackground = async (index: number) => {
-  userConfig.value.background.mode = 'image'
-  userConfig.value.background.image = getSystemBgUrl(index)
-  configStore().updateBackgroundMode('image')
-  configStore().updateBackgroundImage(userConfig.value.background.image)
-  await saveConfig()
-}
-
-const selectCustomBackground = async () => {
-  if (customBackgroundImage.value) {
-    userConfig.value.background.mode = 'image'
-    userConfig.value.background.image = customBackgroundImage.value
-    userConfig.value.lastCustomImage = customBackgroundImage.value
-    configStore().updateBackgroundMode('image')
-    configStore().updateBackgroundImage(userConfig.value.background.image)
-    await saveConfig()
-  }
-}
-
-const selectBackgroundImage = async () => {
-  try {
-    const result = await (api as any).showOpenDialog({
-      properties: ['openFile'],
-      filters: [{ name: 'Images', extensions: ['jpg', 'png', 'gif', 'jpeg', 'webp'] }]
-    })
-
-    if (!result.canceled && result.filePaths.length > 0) {
-      const sourcePath = result.filePaths[0]
-
-      // Call main process to save the file
-      const saveResult = await api.saveCustomBackground(sourcePath)
-
-      if (saveResult.success) {
-        // Use the new path with cache busting
-        const baseUrl = saveResult.url
-        if (baseUrl) {
-          const separator = baseUrl.includes('?') ? '&' : '?'
-          const newPath = `${baseUrl}${separator}t=${Date.now()}`
-          customBackgroundImage.value = newPath
-          userConfig.value.background.mode = 'image'
-          userConfig.value.background.image = newPath
-          userConfig.value.lastCustomImage = newPath
-          configStore().updateBackgroundMode('image')
-          configStore().updateBackgroundImage(userConfig.value.background.image)
-          await saveConfig()
-        }
-      } else {
-        notification.error({
-          message: t('user.saveBackgroundFailed'),
-          description: saveResult.error
-        })
-      }
-    }
-  } catch (error) {
-    logger.error('Failed to select background image', { error: error })
-  }
-}
-
-const clearCustomBackground = async () => {
-  // If currently selected, reset to default (no background)
-  if (userConfig.value.background.image === customBackgroundImage.value) {
-    userConfig.value.background.mode = 'none'
-    userConfig.value.background.image = ''
-    configStore().updateBackgroundMode('none')
-    configStore().updateBackgroundImage('')
-  }
-  customBackgroundImage.value = ''
-  userConfig.value.lastCustomImage = ''
-  await saveConfig()
-}
-
-const changeBackgroundOpacity = async () => {
-  configStore().updateBackgroundOpacity(userConfig.value.background.opacity)
-  await saveConfig()
-}
-
-const changeBackgroundBrightness = async () => {
-  configStore().updateBackgroundBrightness(userConfig.value.background.brightness)
   await saveConfig()
 }
 
@@ -1012,176 +754,6 @@ const saveEditorConfig = async () => {
 .checkbox-md :deep(.ant-checkbox-inner) {
   width: 20px;
   height: 20px;
-}
-
-.background-setting {
-  display: flex;
-  align-items: center;
-}
-
-/* Unified Background Grid */
-.unified-bg-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 123.2px);
-  gap: 8px;
-  margin-bottom: 16px;
-  padding: 2px; /* Prevent hover scale clipping */
-  justify-content: flex-end;
-}
-
-/* Common Grid Item Styles */
-.bg-grid-item {
-  width: 123.2px;
-  height: 69.3px;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: all 0.2s;
-  position: relative;
-}
-
-.bg-grid-item:hover {
-  transform: scale(1.05);
-  z-index: 1;
-}
-
-.bg-grid-item.active {
-  border-color: var(--primary-color, #1890ff);
-}
-
-.bg-grid-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* Upload Placeholder (Custom Item Empty State) */
-.upload-placeholder {
-  width: 100%;
-  height: 100%;
-  border: 2px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-color);
-  opacity: 0.9;
-  transition: all 0.2s;
-}
-
-.bg-grid-item:hover .upload-placeholder {
-  border-color: var(--primary-color, #1890ff);
-  background: rgba(24, 144, 255, 0.1);
-  opacity: 1;
-  color: var(--primary-color, #1890ff);
-}
-
-/* Delete Button for Custom Image */
-.delete-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 4px;
-  color: white;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 0 0 0 4px;
-  line-height: 1;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.bg-grid-item:hover .delete-btn {
-  opacity: 1;
-}
-
-.delete-btn:hover {
-  background: rgba(255, 0, 0, 0.7);
-}
-
-/* Sliders Section */
-.bg-sliders-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.slider-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.slider-label {
-  font-size: 12px;
-  color: var(--text-color);
-  width: 60px;
-  flex-shrink: 0;
-}
-
-.slider-item .ant-slider {
-  flex: 1;
-}
-
-.mt-2 {
-  margin-top: 8px;
-}
-
-/* Default Background Item */
-.default-bg-placeholder {
-  width: 100%;
-  height: 100%;
-  border: 2px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-color);
-  opacity: 0.9;
-  transition: all 0.2s;
-}
-
-.default-bg-item:hover .default-bg-placeholder {
-  border-color: var(--primary-color, #1890ff);
-  background: rgba(24, 144, 255, 0.1);
-  opacity: 1;
-  color: var(--primary-color, #1890ff);
-}
-
-.default-bg-item.active .default-bg-placeholder {
-  border-color: var(--primary-color, #1890ff);
-  color: var(--primary-color, #1890ff);
-}
-
-/* Custom Upload Section */
-.custom-upload-section {
-  margin-top: 12px;
-}
-
-.custom-upload-label {
-  font-size: 12px;
-  color: var(--text-color);
-  opacity: 0.7;
-  margin-bottom: 8px;
-  display: block;
-  text-align: right;
-}
-
-.custom-upload-grid {
-  display: flex;
-  gap: 8px;
-  padding: 2px;
-  justify-content: flex-end;
-}
-
-.custom-upload-grid .bg-grid-item {
-  width: 123.2px;
-  height: 69.3px;
-  flex-shrink: 0;
 }
 
 .editor-settings-section {

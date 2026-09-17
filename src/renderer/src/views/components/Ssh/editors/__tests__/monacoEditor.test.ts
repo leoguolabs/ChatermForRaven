@@ -125,100 +125,18 @@ import MonacoEditor from '@views/components/Editors/base/monacoEditor.vue'
 import KnowledgeCenterEditor from '@views/components/Editors/KnowledgeCenterEditor.vue'
 import mermaid from 'mermaid'
 
-describe('monacoEditor background mode', () => {
-  const originalMutationObserver = globalThis.MutationObserver
-
-  class MockMutationObserver {
-    static lastInstance: MockMutationObserver | null = null
-    private cb: MutationCallback
-    constructor(cb: MutationCallback) {
-      this.cb = cb
-      MockMutationObserver.lastInstance = this
-    }
-    observe() {
-      // noop for mock
-    }
-    disconnect() {
-      // noop for mock
-    }
-    trigger() {
-      this.cb(
-        [
-          {
-            type: 'attributes',
-            attributeName: 'class',
-            target: document.body
-          } as any
-        ],
-        this as any
-      )
-    }
-  }
-
-  beforeEach(() => {
-    MockMutationObserver.lastInstance = null
-    ;(globalThis as any).MutationObserver = MockMutationObserver as any
-    document.body.className = ''
-    monacoMocks.model.updateOptions.mockClear()
-    monacoMocks.model.getLineCount.mockReset()
-    monacoMocks.model.getLineCount.mockReturnValue(12)
-    monacoMocks.model.getLineMaxColumn.mockReset()
-    monacoMocks.model.getLineMaxColumn.mockImplementation((line: number) => line + 10)
-    monacoMocks.editorInstance.onDidChangeModelContent.mockClear()
-    monacoMocks.editorInstance.onDidContentSizeChange.mockClear()
-    monacoMocks.editorInstance.getValue.mockReset()
-    monacoMocks.editorInstance.getValue.mockReturnValue('')
-    monacoMocks.editorInstance.setValue.mockClear()
-    monacoMocks.editorInstance.getModel.mockReset()
-    monacoMocks.editorInstance.getModel.mockReturnValue(monacoMocks.model)
-    monacoMocks.editorInstance.updateOptions.mockClear()
-    monacoMocks.editorInstance.layout.mockClear()
-    monacoMocks.editorInstance.dispose.mockClear()
-    monacoMocks.editorInstance.getContentHeight.mockReset()
-    monacoMocks.editorInstance.getContentHeight.mockReturnValue(120)
-    monacoMocks.editorInstance.setSelection.mockClear()
-    monacoMocks.editorInstance.revealLineInCenter.mockClear()
-    monacoMocks.editorInstance.focus.mockClear()
-    monacoMocks.editorInstance.getSelection.mockReset()
-    monacoMocks.editorInstance.getSelection.mockReturnValue(null)
-    monacoMocks.editorInstance.executeEdits.mockClear()
-  })
-
-  afterEach(() => {
-    document.body.className = ''
-    ;(globalThis as any).MutationObserver = originalMutationObserver
-    vi.clearAllMocks()
-  })
-
-  it('should apply with-custom-bg when body has has-custom-bg at mount', async () => {
+describe('monacoEditor theme', () => {
+  it('creates a solid editor even when a legacy background class is present', async () => {
     document.body.classList.add('has-custom-bg')
-
-    const wrapper = mount(MonacoEditor, {
-      props: { modelValue: '' }
-    })
-
-    expect(wrapper.classes()).toContain('with-custom-bg')
-  })
-
-  it('should toggle with-custom-bg when body class changes', async () => {
-    const wrapper = mount(MonacoEditor, {
-      props: { modelValue: '' }
-    })
-
-    // Wait for onMounted async (loadConfig) to resolve and observer to be registered
-    await flushPromises()
-
-    expect(wrapper.classes()).not.toContain('with-custom-bg')
-
-    document.body.classList.add('has-custom-bg')
-    MockMutationObserver.lastInstance?.trigger()
-    await nextTick()
-    expect(wrapper.classes()).toContain('with-custom-bg')
-
-    document.body.classList.remove('has-custom-bg')
-    MockMutationObserver.lastInstance?.trigger()
-    await nextTick()
-    expect(wrapper.classes()).not.toContain('with-custom-bg')
+    const wrapper = mount(MonacoEditor, { props: { modelValue: '' } })
+    try {
+      await flushPromises()
+      expect(wrapper.classes()).not.toContain('with-custom-bg')
+      expect(monacoMocks.editorInstance.onDidChangeModelContent).toHaveBeenCalled()
+    } finally {
+      wrapper.unmount()
+      document.body.className = ''
+    }
   })
 })
 

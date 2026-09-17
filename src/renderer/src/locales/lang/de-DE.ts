@@ -462,13 +462,7 @@ export default {
     openConfig: 'Konfiguration öffnen',
     keywordHighlightDescribe:
       'Klicken Sie auf die Schaltfläche, um die Schlüsselwort-Hervorhebungskonfigurationsdatei direkt zu öffnen und Hervorhebungsregeln für die Terminalausgabe zu personalisieren.',
-    success: 'Erfolgreich',
-    background: 'Hintergrund',
-    backgroundDefault: 'Standard-Hintergrund',
-    backgroundCustomUpload: 'Benutzerdefinierter Upload (JPG, PNG, WebP, GIF)',
-    backgroundOpacity: 'Transparenz',
-    backgroundBrightness: 'Helligkeit',
-    saveBackgroundFailed: 'Hintergrundbild speichern fehlgeschlagen'
+    success: 'Erfolgreich'
   },
   extensions: {
     plugins: 'Plugins',

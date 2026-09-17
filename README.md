@@ -159,4 +159,6 @@ Please refer to the <a href="./CONTRIBUTING.md">Contribution Guide</a> for more 
 
 ## Raven terminal settings
 
+Settings use the selected theme’s solid background. Wallpaper presets, image uploads, and background opacity/brightness controls are no longer available.
+
 The Raven terminal settings include General, Terminal, Extensions, Models, AI Preferences, Tools & MCP, Skills, Rules, and Shortcuts. Billing, Trusted Devices, Privacy, About, and the documentation shortcut have been removed, together with their dedicated pages and account-management API wrappers. Shared login, synchronization, redaction, and update services remain in use.

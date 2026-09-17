@@ -4,7 +4,6 @@
       <draggable
         v-model="localTab"
         class="tabs-bar"
-        :class="{ 'transparent-bg': isTransparent }"
         :animation="150"
         handle=".tab-title"
         item-key="id"
@@ -28,10 +27,7 @@
           </div>
         </template>
       </draggable>
-      <div
-        class="tabs-content"
-        :class="{ 'transparent-bg': isTransparent }"
-      >
+      <div class="tabs-content">
         <template v-if="localTab.organizationId && localTab.organizationId !== ''">
           <sshConnect
             :key="`main-terminal-${localTab.id}`"
@@ -98,7 +94,6 @@
 </template>
 <script setup lang="ts">
 import { computed, ref, ComponentPublicInstance, onMounted, watch, nextTick } from 'vue'
-import { userConfigStore } from '@/store/userConfigStore'
 import 'splitpanes/dist/splitpanes.css'
 import UserInfo from '@views/components/LeftTab/config/userInfo.vue'
 import UserConfig from '@views/components/LeftTab/config/userConfig.vue'
@@ -153,8 +148,6 @@ const emit = defineEmits<{
 }>()
 
 const localTab = computed(() => props.params.params as TabItem)
-const configStore = userConfigStore()
-const isTransparent = computed(() => !!configStore.getUserConfig.background.image)
 
 const closeTab = (value) => {
   if (localTab.value?.closeCurrentPanel) {
@@ -337,35 +330,6 @@ defineExpose({
   user-select: none;
   scrollbar-width: thin;
   scrollbar-color: var(--border-color-light) transparent;
-
-  &.transparent-bg {
-    background-color: transparent !important;
-    border-bottom-color: var(--border-color);
-
-    .tab-item {
-      background-color: var(--bg-color-secondary);
-      color: var(--text-color);
-      border-right-color: var(--border-color);
-
-      &.active {
-        background-color: var(--bg-color-tertiary);
-        color: var(--text-color);
-        border-top-color: #007acc;
-      }
-
-      .tab-title {
-        color: inherit;
-      }
-
-      .close-btn {
-        color: var(--text-color-tertiary);
-        &:hover {
-          color: var(--text-color);
-          background-color: var(--hover-bg-color);
-        }
-      }
-    }
-  }
 }
 
 .tabs-bar::-webkit-scrollbar {
@@ -430,10 +394,6 @@ defineExpose({
   flex: 1;
   overflow: auto;
   background-color: var(--bg-color);
-
-  &.transparent-bg {
-    background-color: transparent !important;
-  }
 }
 
 .tab-title-input {

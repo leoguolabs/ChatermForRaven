@@ -458,13 +458,7 @@ export default {
     keywordHighlight: '关键词高亮',
     openConfig: '打开配置',
     keywordHighlightDescribe: '点击按钮直接打开关键词高亮配置文件，自定义终端输出的高亮规则。',
-    success: '成功',
-    background: '背景',
-    backgroundDefault: '默认背景',
-    backgroundCustomUpload: '自定义上传（支持JPG、PNG、WebP、GIF）',
-    backgroundOpacity: '透明度',
-    backgroundBrightness: '亮度',
-    saveBackgroundFailed: '保存背景图片失败'
+    success: '成功'
   },
   extensions: {
     plugins: '插件',

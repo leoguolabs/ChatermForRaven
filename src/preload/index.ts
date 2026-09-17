@@ -1455,7 +1455,6 @@ const api = {
       await ipcRenderer.invoke('db:kv:transaction', ops)
     }
   },
-  saveCustomBackground: (sourcePath: string) => ipcRenderer.invoke('saveCustomBackground', sourcePath),
 
   // Plugin
   installPlugin(filePath: string) {

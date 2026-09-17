@@ -2,7 +2,6 @@
   <div
     ref="terminalContainer"
     class="terminal-container"
-    :class="{ 'transparent-bg': isTransparent }"
     :data-ssh-connect-id="currentConnectionId"
   >
     <SearchComp
@@ -121,7 +120,6 @@ import { LanguageMap } from '../Editors/base/languageMap'
 import { message, Modal } from 'ant-design-vue'
 import { aliasConfigStore } from '@/store/aliasConfigStore'
 import { useMacroRecorderStore } from '@/store/macroRecorderStore'
-import { userConfigStore } from '../../../store/userConfigStore'
 import { userConfigStore as serviceUserConfig } from '@/services/userConfigStoreService'
 import { v4 as uuidv4 } from 'uuid'
 import { Base64Util } from '@/utils/base64'
@@ -169,9 +167,6 @@ type ShellCloseInfo = {
   errorMessage?: string
 }
 const selectFlag = ref(false)
-const configStore = userConfigStore()
-const isTransparent = computed(() => !!configStore.getUserConfig.background.image)
-const hasCustomBg = (): boolean => isTransparent.value === true
 let viewportScrollbarHideTimer: number | null = null
 
 // Coalesced scrollToBottom: uses requestAnimationFrame for smooth alignment with browser repaint
@@ -529,8 +524,8 @@ onMounted(async () => {
       cursorStyle: config.cursorStyle,
       fontSize: config.fontSize || 12,
       fontFamily: config.fontFamily || 'Menlo, Monaco, "Courier New", Consolas, Courier, monospace',
-      allowTransparency: true,
-      theme: getResolvedTerminalTheme(config.theme as ThemeId, { hasCustomBg: hasCustomBg() })
+      allowTransparency: false,
+      theme: getResolvedTerminalTheme(config.theme as ThemeId)
     })
   )
   terminal.value = termInstance
@@ -593,7 +588,7 @@ onMounted(async () => {
 
   ensureTransferListener()
   // Enable GPU-accelerated rendering for better performance with large output
-  if (!config.background?.image && getActualTheme(config.theme) !== 'light') {
+  if (getActualTheme(config.theme) !== 'light') {
     try {
       const { WebglAddon } = await import('@xterm/addon-webgl')
       const webglAddon = new WebglAddon()
@@ -875,7 +870,7 @@ onMounted(async () => {
   const handleUpdateTheme = (payload: string | ThemeChangePayload) => {
     const themeId = (typeof payload === 'string' ? payload : payload.themeId) as ThemeId
     if (terminal.value) {
-      terminal.value.options.theme = getResolvedTerminalTheme(themeId, { hasCustomBg: hasCustomBg() })
+      terminal.value.options.theme = getResolvedTerminalTheme(themeId)
     }
   }
   const handleGetCursorPosition = (payload: { connectionId?: string; callback: (position: any) => void }) => {
@@ -976,16 +971,6 @@ onMounted(async () => {
       }
     })
   }
-
-  // Watch for background image changes to update terminal transparency
-  watch(
-    () => configStore.getUserConfig.background.image,
-    () => {
-      if (terminal.value) {
-        handleUpdateTheme(configStore.getUserConfig.theme as ThemeId)
-      }
-    }
-  )
 })
 
 const getCmdList = async (systemCommands) => {
@@ -5709,10 +5694,6 @@ const createCtrlLinkProvider = (term: Terminal): ILinkProvider => {
   overflow: hidden;
   padding: 4px 4px 0px 12px;
   position: relative;
-
-  &.transparent-bg {
-    background-color: transparent !important;
-  }
 }
 
 .terminal {

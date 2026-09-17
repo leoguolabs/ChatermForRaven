@@ -465,13 +465,7 @@ export default {
     openConfig: 'Open Config',
     keywordHighlightDescribe:
       'Click the button to directly open the keyword highlighting configuration file and customize highlighting rules for terminal output.',
-    success: 'Success',
-    background: 'Background',
-    backgroundDefault: 'Default',
-    backgroundCustomUpload: 'Custom Upload (JPG, PNG, WebP, GIF)',
-    backgroundOpacity: 'Opacity',
-    backgroundBrightness: 'Brightness',
-    saveBackgroundFailed: 'Failed to save background image'
+    success: 'Success'
   },
   extensions: {
     plugins: 'Plugins',

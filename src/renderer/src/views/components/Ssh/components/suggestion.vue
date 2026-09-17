@@ -495,21 +495,4 @@ defineExpose({ updateSuggestionsPosition })
   background: var(--scrollbar-track-color) !important;
   border-radius: 3px !important;
 }
-
-/* Improve readability when terminal uses custom background image */
-body.has-custom-bg.theme-dark .terminal-container .suggestions,
-.theme-dark body.has-custom-bg .terminal-container .suggestions {
-  background: rgba(37, 37, 38, 0.9) !important;
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-color: rgba(255, 255, 255, 0.12) !important;
-}
-
-body.has-custom-bg.theme-light .terminal-container .suggestions,
-.theme-light body.has-custom-bg .terminal-container .suggestions {
-  background: rgba(243, 243, 243, 0.9) !important;
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-color: rgba(0, 0, 0, 0.12) !important;
-}
 </style>

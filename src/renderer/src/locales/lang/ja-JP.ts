@@ -460,13 +460,7 @@ export default {
     openConfig: '設定を開く',
     keywordHighlightDescribe:
       'ボタンをクリックして、キーワードハイライト設定ファイルを直接開き、ターミナル出力のハイライトルールをカスタマイズします。',
-    success: '成功',
-    background: '背景',
-    backgroundDefault: 'デフォルト背景',
-    backgroundCustomUpload: 'カスタムアップロード（JPG、PNG、WebP、GIF）',
-    backgroundOpacity: '不透明度',
-    backgroundBrightness: '明るさ',
-    saveBackgroundFailed: '背景画像の保存に失敗しました'
+    success: '成功'
   },
   extensions: {
     plugins: 'プラグイン',

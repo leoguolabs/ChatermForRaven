@@ -462,13 +462,7 @@ export default {
     openConfig: 'Ouvrir la configuration',
     keywordHighlightDescribe:
       'Cliquez sur le bouton pour ouvrir directement le fichier de configuration de la mise en évidence des mots-clés et personnaliser les règles de mise en évidence pour la sortie du terminal.',
-    success: 'Succès',
-    background: 'Fond',
-    backgroundDefault: 'Fond par defaut',
-    backgroundCustomUpload: 'Import personnalise (JPG, PNG, WebP, GIF)',
-    backgroundOpacity: 'Opacité',
-    backgroundBrightness: 'Luminosité',
-    saveBackgroundFailed: "Échec de la sauvegarde de l'image de fond"
+    success: 'Succès'
   },
   extensions: {
     plugins: 'Plugins',

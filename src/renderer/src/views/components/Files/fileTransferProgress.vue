@@ -34,7 +34,6 @@
     <div
       v-else
       class="transfer-panel"
-      :style="transferPanelStyle"
     >
       <div class="header">
         <span>{{ $t('files.taskList') }}</span>
@@ -448,10 +447,7 @@
 import { downloadGroups, uploadGroups, r2rTaskGroups, transferTasks, type Task, type TaskStatus } from './fileTransfer'
 import { ArrowDownOutlined, ArrowUpOutlined, CloseOutlined, DownOutlined, MinusOutlined, RightOutlined, SwapOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { addSystemThemeListener, getActualTheme } from '@/utils/themeUtils'
-import { userConfigStore } from '@store/userConfigStore'
-const configStore = userConfigStore()
+import { computed, ref } from 'vue'
 
 const { t: $t } = useI18n()
 const api = (window as any).api
@@ -530,59 +526,6 @@ const extractIp = (s: string) => {
   const at = first.lastIndexOf('@')
   return at >= 0 ? first.slice(at + 1) : first
 }
-
-const transferPanelStyle = ref<Record<string, string>>({})
-let removeSystemThemeListener: (() => void) | undefined
-
-const updateTransferPanelStyle = () => {
-  const hasBgImage = !!configStore.getUserConfig.background.image
-  const actualTheme = getActualTheme(configStore.getUserConfig.theme)
-  if (!hasBgImage) {
-    transferPanelStyle.value = {
-      background: 'linear-gradient(0deg, var(--hover-bg-color), var(--hover-bg-color)), var(--bg-color)'
-    }
-    return
-  }
-
-  if (actualTheme === 'light') {
-    transferPanelStyle.value = {
-      background: 'rgba(245, 245, 245, 0.95)'
-    }
-    return
-  }
-
-  transferPanelStyle.value = {
-    background: 'rgba(36, 36, 36, 0.95)'
-  }
-}
-
-watch(
-  () => [configStore.getUserConfig.theme, configStore.getUserConfig.background.image],
-  ([theme]) => {
-    updateTransferPanelStyle()
-
-    if (removeSystemThemeListener) {
-      removeSystemThemeListener()
-      removeSystemThemeListener = undefined
-    }
-
-    if (theme === 'auto') {
-      removeSystemThemeListener = addSystemThemeListener(() => {
-        if (configStore.getUserConfig.theme === 'auto') {
-          updateTransferPanelStyle()
-        }
-      }) as () => void
-    }
-  },
-  { immediate: true }
-)
-
-onBeforeUnmount(() => {
-  if (removeSystemThemeListener) {
-    removeSystemThemeListener()
-    removeSystemThemeListener = undefined
-  }
-})
 </script>
 
 <style scoped>

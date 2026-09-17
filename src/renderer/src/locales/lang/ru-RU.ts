@@ -462,13 +462,7 @@ export default {
     openConfig: 'Открыть конфигурацию',
     keywordHighlightDescribe:
       'Нажмите кнопку, чтобы непосредственно открыть файл конфигурации подсветки ключевых слов и настроить правила подсветки для вывода терминала.',
-    success: 'Успешно',
-    background: 'Фон',
-    backgroundDefault: 'Фон по умолчанию',
-    backgroundCustomUpload: 'Пользовательская загрузка (JPG, PNG, WebP, GIF)',
-    backgroundOpacity: 'Непрозрачность',
-    backgroundBrightness: 'Яркость',
-    saveBackgroundFailed: 'Не удалось сохранить фоновое изображение'
+    success: 'Успешно'
   },
   extensions: {
     plugins: 'Плагины',

@@ -89,7 +89,23 @@ describe('UserConfigStoreService', () => {
     const service = new UserConfigStoreService()
 
     await service.initDB()
-    await service.saveConfig({ theme: 'dark' })
+    const retiredSettings = {
+      background: { mode: 'image', image: 'file:///old-wallpaper.jpg', opacity: 0.2, brightness: 0.5 },
+      lastCustomImage: 'file:///old-wallpaper.jpg',
+      backgroundConfig: { enabled: true, imagePath: 'file:///old-wallpaper.jpg' },
+      backgroundImage: 'file:///old-wallpaper.jpg',
+      backgroundMode: 'image',
+      backgroundOpacity: 0.2,
+      backgroundBrightness: 0.5
+    }
+    kvStore.set('userConfig', JSON.stringify({ theme: 'light', fontSize: 18, ...retiredSettings }))
+    const loaded = await service.getConfig()
+    expect(loaded.theme).toBe('light')
+    expect(loaded.fontSize).toBe(18)
+    for (const key of Object.keys(retiredSettings)) {
+      expect(loaded).not.toHaveProperty(key)
+    }
+    await service.saveConfig({ theme: 'dark', ...retiredSettings })
 
     expect(kvTransaction).toHaveBeenCalledTimes(1)
 
@@ -97,6 +113,10 @@ describe('UserConfigStoreService', () => {
     const storedMeta = JSON.parse(kvStore.get('userConfigSyncMeta') ?? '{}')
 
     expect(storedConfig.theme).toBe('dark')
+    expect(storedConfig.fontSize).toBe(18)
+    for (const key of Object.keys(retiredSettings)) {
+      expect(storedConfig).not.toHaveProperty(key)
+    }
     expect(storedMeta.dirty).toBe(true)
     expect(storedMeta.schemaVersion).toBe(1)
   })
@@ -176,14 +196,7 @@ describe('UserConfigStoreService', () => {
         sshAgentsStatus: 2,
         sshAgentsMap: '[]',
         sshProxyConfigs: [],
-        workspaceExpandedKeys: [],
-        lastCustomImage: '',
-        background: {
-          mode: 'none',
-          image: '',
-          opacity: 0.15,
-          brightness: 0.45
-        }
+        workspaceExpandedKeys: []
       })
     )
     kvStore.set(

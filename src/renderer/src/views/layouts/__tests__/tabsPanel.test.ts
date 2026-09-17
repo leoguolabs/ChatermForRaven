@@ -8,7 +8,6 @@
  * - SSH connection rendering
  * - Config tabs rendering (userInfo, userConfig, etc.)
  * - Plugin details rendering
- * - Transparent background toggle
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -16,6 +15,9 @@ import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import TabsPanelComponent from '../tabsPanel.vue'
+
+// Isolate component tests from application bootstrap.
+vi.mock('@/main', async () => ({ pinia: (await import('pinia')).createPinia() }))
 
 // Mock child components
 vi.mock('@views/components/Ssh/sshConnect.vue', () => ({
@@ -387,23 +389,6 @@ describe('TabsPanel Component', () => {
 
       // Should not render plugin detail without props
       expect(wrapper.html()).not.toContain('Plugin Detail')
-    })
-  })
-
-  describe('Transparent Background', () => {
-    it('should apply transparent-bg class when background image is set', async () => {
-      // Set up store with background image
-      wrapper = createWrapper()
-
-      const store = pinia.state.value.userConfig as any
-      if (store) {
-        store.userConfig = { background: { image: 'path/to/image.jpg' } }
-      }
-
-      await nextTick()
-
-      // The component checks isTransparent computed property
-      // Note: This test checks the logic, actual class application depends on store setup
     })
   })
 

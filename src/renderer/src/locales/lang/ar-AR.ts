@@ -445,13 +445,7 @@ export default {
     keywordHighlight: 'تمييز الكلمات الرئيسية',
     openConfig: 'فتح الإعدادات',
     keywordHighlightDescribe: 'اضغط على الزر لفتح ملف إعدادات تمييز الكلمات الرئيسية مباشرة وتخصيص قواعد التمييز لإخراج التبويب.',
-    success: 'نجاح',
-    background: 'الخلفية',
-    backgroundDefault: 'الخلفية الافتراضية',
-    backgroundCustomUpload: 'تحميل مخصص (JPG, PNG, WebP, GIF)',
-    backgroundOpacity: 'العتمة',
-    backgroundBrightness: 'السطوع',
-    saveBackgroundFailed: 'فشل حفظ صورة الخلفية'
+    success: 'نجاح'
   },
   extensions: {
     plugins: 'الإضافات',

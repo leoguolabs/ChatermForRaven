@@ -2,7 +2,7 @@
   <div
     ref="containerRef"
     class="k8s-terminal-container"
-    :class="{ 'transparent-bg': isTransparent, 'theme-light': isLightTheme }"
+    :class="{ 'theme-light': isLightTheme }"
   >
     <div
       ref="terminalRef"
@@ -67,7 +67,6 @@ const cleanupFns: Array<() => void> = []
 
 let userConfig: any = null
 
-const isTransparent = computed(() => !!configStore.getUserConfig.background.image)
 const currentTheme = ref(getActualTheme(configStore.getUserConfig.theme || 'dark'))
 const isLightTheme = computed(() => currentTheme.value === 'light')
 
@@ -114,7 +113,7 @@ const debounce = (func: (...args: any[]) => void, wait: number, immediate = fals
 // Get terminal theme using unified resolver
 const getTerminalTheme = (themeOverride?: string) => {
   const themeId = (themeOverride || userConfig?.theme || configStore.getUserConfig.theme || 'dark') as ThemeId
-  return getResolvedTerminalTheme(themeId, { hasCustomBg: isTransparent.value === true })
+  return getResolvedTerminalTheme(themeId)
 }
 
 // Initialize terminal
@@ -132,7 +131,7 @@ const initTerminal = async () => {
     cursorStyle: userConfig?.cursorStyle || 'block',
     fontSize,
     fontFamily,
-    allowTransparency: true,
+    allowTransparency: false,
     theme: getTerminalTheme()
   })
 
@@ -395,18 +394,6 @@ onMounted(() => {
   eventBus.on('updateTheme', handleUpdateTheme)
   cleanupFns.push(() => eventBus.off('updateTheme', handleUpdateTheme))
 
-  // Re-apply terminal theme when the custom background image is toggled so
-  // the xterm surface picks up the new transparent/opaque state immediately.
-  const stopBgWatch = watch(
-    () => configStore.getUserConfig.background.image,
-    () => {
-      if (terminal.value) {
-        terminal.value.options.theme = getTerminalTheme()
-      }
-    }
-  )
-  cleanupFns.push(stopBgWatch)
-
   // Handle executeTerminalCommand for AI command mode
   const handleExecuteCommand = (payload: { command: string; tabId?: string }) => {
     if (!props.isActive) return
@@ -468,10 +455,6 @@ defineExpose({
 
   &.theme-light {
     background: #f5f5f5;
-  }
-
-  &.transparent-bg {
-    background: transparent !important;
   }
 }
 
