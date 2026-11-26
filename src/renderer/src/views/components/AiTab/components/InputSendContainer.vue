@@ -1261,7 +1261,7 @@ onBeforeUnmount(() => {
   justify-content: flex-start;
   gap: 4px;
   padding: 8px 8px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   min-height: 32px;
   container-type: inline-size;
   container-name: input-controls;
